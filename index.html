@@ -277,7 +277,7 @@ async function saveToAirtable(customerData) {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        model: "claude-sonnet-4-20250514",
+        model: "claude-sonnet-4-5",
         max_tokens: 1000,
         system: `You are a data assistant. Use Airtable MCP to save a customer record. 
 Steps:
@@ -332,7 +332,7 @@ async function callClaude(userMessage) {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
-      model: "claude-sonnet-4-20250514",
+      model: "claude-sonnet-4-5",
       max_tokens: 1000,
       system: SYSTEM_PROMPT,
       tools,
@@ -366,7 +366,7 @@ async function callClaude(userMessage) {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        model: "claude-sonnet-4-20250514",
+        model: "claude-sonnet-4-5",
         max_tokens: 500,
         system: SYSTEM_PROMPT,
         tools,
