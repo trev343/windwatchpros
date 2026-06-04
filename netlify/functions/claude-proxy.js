@@ -18,15 +18,11 @@ exports.handler = async function(event, context) {
 
   try {
     const apiKey = process.env.ANTHROPIC_API_KEY;
-    console.log("API key present:", !!apiKey);
-    console.log("API key length:", apiKey ? apiKey.length : 0);
-    
     if (!apiKey) {
       return { statusCode: 500, headers, body: JSON.stringify({ error: "API key not configured" }) };
     }
 
     const body = event.body;
-    console.log("Request body length:", body ? body.length : 0);
 
     const result = await new Promise((resolve, reject) => {
       const options = {
@@ -37,6 +33,7 @@ exports.handler = async function(event, context) {
           'Content-Type': 'application/json',
           'x-api-key': apiKey,
           'anthropic-version': '2023-06-01',
+          'anthropic-beta': 'mcp-client-2025-04-04',
           'Content-Length': Buffer.byteLength(body)
         }
       };
@@ -45,15 +42,13 @@ exports.handler = async function(event, context) {
         let data = '';
         res.on('data', (chunk) => { data += chunk; });
         res.on('end', () => {
-          console.log("Anthropic response status:", res.statusCode);
+          console.log("Status:", res.statusCode);
+          console.log("Response:", data);
           resolve({ status: res.statusCode, body: data });
         });
       });
 
-      req.on('error', (err) => {
-        console.log("Request error:", err.message);
-        reject(err);
-      });
+      req.on('error', reject);
       req.write(body);
       req.end();
     });
@@ -61,7 +56,6 @@ exports.handler = async function(event, context) {
     return { statusCode: result.status, headers, body: result.body };
 
   } catch (err) {
-    console.log("Caught error:", err.message);
     return { statusCode: 500, headers, body: JSON.stringify({ error: err.message }) };
   }
 };
