@@ -233,8 +233,6 @@ Once you have ALL 6 pieces of info, briefly confirm the details with the custome
 
 Keep responses under 3 sentences. No markdown or bullet points in your replies.`;
 
-const AIRTABLE_MCP_URL = "https://mcp.airtable.com/mcp";
-
 let history = [];
 let saving = false;
 
@@ -273,36 +271,13 @@ function setInputDisabled(disabled) {
 
 async function saveToAirtable(customerData) {
   try {
-    const resp = await fetch("https://inspiring-biscochitos-904540.netlify.app/.netlify/functions/claude-proxy", {
+    const resp = await fetch("https://hook.us2.make.com/9nq8xkrycmujgxr32eomx2chlfkbgjzh", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        model: "claude-sonnet-4-5",
-        max_tokens: 1000,
-        system: `You are a data assistant. Use Airtable MCP to save a customer record. 
-Steps:
-1. List available bases
-2. Find a base related to wind alerts, customers, or events. If none exists, create one called "Wind Watch Pro"
-3. Find or create a table called "Customers" with fields: Full Name, Company Name, Email, Phone, Zip Codes, Wind Speed Threshold MPH
-4. Create the record
-5. Respond with ONLY valid JSON: {"success": true} or {"success": false, "error": "reason"}
-No other text, no markdown.`,
-        mcp_servers: [{ type: "url", url: AIRTABLE_MCP_URL, name: "airtable" }],
-        messages: [{
-          role: "user",
-          content: `Save this customer: ${JSON.stringify(customerData)}`
-        }]
-      })
+      body: JSON.stringify(customerData)
     });
-
-    const data = await resp.json();
-    const text = data.content.filter(b => b.type === "text").map(b => b.text).join("");
-    try {
-      const match = text.match(/\{[\s\S]*\}/);
-      if (match) return JSON.parse(match[0]);
-    } catch(e) {}
-    if (text.toLowerCase().includes("success") || text.toLowerCase().includes("created")) return { success: true };
-    return { success: false, error: text };
+    if (resp.ok) return { success: true };
+    return { success: false, error: "Webhook returned " + resp.status };
   } catch(err) {
     return { success: false, error: err.message };
   }
