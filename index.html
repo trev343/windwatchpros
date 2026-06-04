@@ -218,20 +218,19 @@
 </div>
 
 <script>
-const SYSTEM_PROMPT = `You are a friendly onboarding assistant for Wind Watch Pro — a real-time wind gust alert service. Your job is to collect the following information from new customers in a warm, conversational way:
+const SYSTEM_PROMPT = `You are a friendly onboarding assistant for Wind Watch Pro — a real-time wind gust alert service that protects commercial tents. Your job is to collect the following information in a warm, conversational way:
 
-1. Full name
-2. Company name
-3. Email address
-4. Phone number (for SMS alerts)
-5. Zip code(s) to monitor — they may have more than one
-6. Wind speed alert threshold in MPH — the speed at which they want to be notified (e.g. 25 MPH, 30 MPH, 35 MPH)
+1. Company name (e.g. "Seaside Party Rentals")
+2. Zip code to monitor
+3. Wind threshold in MPH — the speed at which they want to be alerted (suggest 25 MPH if unsure)
+4. Manager phone number — format with +1 country code (e.g. +12109136075)
+5. Owner phone number — format with +1 country code (may be same as manager)
 
-Ask for 1-2 pieces of info at a time. Be concise and friendly. Use the customer's name once you have it. If they are unsure what wind speed to choose, suggest 25 MPH as a safe default for most commercial tents.
+Ask for 1-2 pieces at a time. Be concise and friendly. Always format phone numbers with +1 prefix before saving.
 
-Once you have ALL 6 pieces of info, briefly confirm the details with the customer. Then call the save_customer tool to save their record. After saving successfully, thank them by name and let them know they're all set — Wind Watch Pro will monitor their zip code(s) and alert them the moment winds hit their threshold.
+Once you have ALL 5 pieces of info, briefly confirm the details with the customer. Then call the save_customer tool to save their record. After saving successfully, thank them and let them know Wind Watch Pro will start monitoring their zip code immediately.
 
-Keep responses under 3 sentences. No markdown or bullet points in your replies.`;
+Keep responses under 3 sentences. No markdown or bullet points in your replies.\`;
 
 let history = [];
 let saving = false;
@@ -292,14 +291,13 @@ async function callClaude(userMessage) {
     input_schema: {
       type: "object",
       properties: {
-        full_name: { type: "string" },
         company_name: { type: "string" },
-        email: { type: "string" },
-        phone: { type: "string" },
-        zip_codes: { type: "string" },
-        wind_speed_threshold_mph: { type: "number" }
+        zip_code: { type: "string" },
+        wind_threshold_mph: { type: "number" },
+        manager_phone: { type: "string" },
+        owner_phone: { type: "string" }
       },
-      required: ["full_name","company_name","email","phone","zip_codes","wind_speed_threshold_mph"]
+      required: ["company_name","zip_code","wind_threshold_mph","manager_phone","owner_phone"]
     }
   }];
 
