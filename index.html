@@ -328,7 +328,7 @@ async function callClaude(userMessage) {
     }
   }];
 
-  const resp = await fetch("/.netlify/functions/claude-proxy", {
+  const resp = await fetch("https://1151on63.netlify.app/.netlify/functions/claude-proxy", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
@@ -362,7 +362,7 @@ async function callClaude(userMessage) {
       }]
     });
 
-    const followResp = await fetch("/.netlify/functions/claude-proxy", {
+    const followResp = await fetch("https://1151on63.netlify.app/.netlify/functions/claude-proxy", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
