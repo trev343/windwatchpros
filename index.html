@@ -270,13 +270,27 @@ function setInputDisabled(disabled) {
 
 async function saveToAirtable(customerData) {
   try {
-    const resp = await fetch("https://hook.us2.make.com/9nq8xkrycmujgxr32eomx2chlfkbgjzh", {
+    const resp = await fetch("https://api.airtable.com/v0/appuT8I6375ZPeNh1/Companies", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(customerData)
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": "Bearer patiElRIOdXymGrEp.2389e3359921f6c178290518748148a105141a4b566e71759f178bdf8c9eb730"
+      },
+      body: JSON.stringify({
+        records: [{
+          fields: {
+            "Company Name": customerData.company_name,
+            "Zip Code": customerData.zip_code,
+            "Wind Threshold (mph)": customerData.wind_threshold_mph,
+            "Manager Phone": customerData.manager_phone,
+            "Owner Phone": customerData.owner_phone
+          }
+        }]
+      })
     });
+    const data = await resp.json();
     if (resp.ok) return { success: true };
-    return { success: false, error: "Webhook returned " + resp.status };
+    return { success: false, error: JSON.stringify(data) };
   } catch(err) {
     return { success: false, error: err.message };
   }
@@ -301,9 +315,13 @@ async function callClaude(userMessage) {
     }
   }];
 
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 15000);
+
   const resp = await fetch("https://inspiring-biscochitos-904540.netlify.app/.netlify/functions/claude-proxy", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
+    signal: controller.signal,
     body: JSON.stringify({
       model: "claude-sonnet-4-5",
       max_tokens: 1000,
@@ -312,6 +330,7 @@ async function callClaude(userMessage) {
       messages: history
     })
   });
+  clearTimeout(timeout);
 
   const data = await resp.json();
   const toolUse = data.content.find(b => b.type === "tool_use");
@@ -335,9 +354,12 @@ async function callClaude(userMessage) {
       }]
     });
 
+    const controller2 = new AbortController();
+    const timeout2 = setTimeout(() => controller2.abort(), 15000);
     const followResp = await fetch("https://inspiring-biscochitos-904540.netlify.app/.netlify/functions/claude-proxy", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
+      signal: controller2.signal,
       body: JSON.stringify({
         model: "claude-sonnet-4-5",
         max_tokens: 500,
@@ -346,6 +368,7 @@ async function callClaude(userMessage) {
         messages: history
       })
     });
+    clearTimeout(timeout2);
 
     const followData = await followResp.json();
     history.push({ role: "assistant", content: followData.content });
