@@ -74,4 +74,426 @@
     width: 28px; height: 28px;
     border-radius: 50%;
     display: flex; align-items: center; justify-content: center;
-    font-size: 11px; font-weight: 600
+    font-size: 11px; font-weight: 600;
+    flex-shrink: 0;
+  }
+
+  .msg.agent .avatar { background: rgba(47,196,240,0.15); color: #2fc4f0; border: 1px solid rgba(47,196,240,0.3); }
+  .msg.user .avatar { background: rgba(255,255,255,0.07); color: #aaa; border: 1px solid rgba(255,255,255,0.1); }
+
+  .bubble {
+    max-width: 78%;
+    padding: 10px 14px;
+    font-size: 14px;
+    line-height: 1.55;
+    border-radius: 16px;
+  }
+
+  .msg.agent .bubble {
+    background: #1a1f2e;
+    color: #e2e8f0;
+    border-radius: 4px 16px 16px 16px;
+    border: 1px solid rgba(47,196,240,0.1);
+  }
+
+  .msg.user .bubble {
+    background: rgba(47,196,240,0.12);
+    color: #e2e8f0;
+    border-radius: 16px 4px 16px 16px;
+    border: 1px solid rgba(47,196,240,0.2);
+  }
+
+  .typing-bubble {
+    background: #1a1f2e;
+    border: 1px solid rgba(47,196,240,0.1);
+    border-radius: 4px 16px 16px 16px;
+    padding: 12px 16px;
+    display: flex; gap: 5px; align-items: center;
+  }
+
+  .dot {
+    width: 7px; height: 7px;
+    background: #2fc4f0;
+    border-radius: 50%;
+    animation: bounce 1.2s infinite;
+    opacity: 0.6;
+  }
+  .dot:nth-child(2) { animation-delay: 0.2s; }
+  .dot:nth-child(3) { animation-delay: 0.4s; }
+
+  #input-area {
+    padding: 14px 16px;
+    background: #0d0d0d;
+    border-top: 1px solid rgba(47,196,240,0.12);
+    display: flex;
+    gap: 10px;
+    align-items: flex-end;
+  }
+
+  #user-input {
+    flex: 1;
+    border: 1px solid rgba(47,196,240,0.2);
+    border-radius: 24px;
+    padding: 10px 16px;
+    font-size: 14px;
+    font-family: inherit;
+    resize: none;
+    outline: none;
+    max-height: 100px;
+    line-height: 1.4;
+    color: #e2e8f0;
+    transition: border-color 0.15s;
+    background: #1a1f2e;
+  }
+
+  #user-input:focus { border-color: #2fc4f0; box-shadow: 0 0 0 3px rgba(47,196,240,0.08); }
+  #user-input::placeholder { color: #4a5568; }
+
+  #send-btn {
+    width: 40px; height: 40px;
+    background: #2fc4f0;
+    border: none;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+    transition: background 0.15s, transform 0.1s, box-shadow 0.15s;
+  }
+
+  #send-btn:hover { background: #5dd3f5; box-shadow: 0 0 12px rgba(47,196,240,0.4); }
+  #send-btn:active { transform: scale(0.95); }
+  #send-btn:disabled { background: #1a2535; cursor: not-allowed; box-shadow: none; }
+
+  #send-btn svg { width: 18px; height: 18px; fill: #0d0d0d; }
+</style>
+</head>
+<body>
+
+<div id="chat-container">
+  <div id="chat-header">
+    <div style="display:flex; align-items:center; justify-content:space-between; width:100%;">
+      <div style="height:36px; display:flex; align-items:center;">
+        <svg viewBox="0 0 680 160" height="36" xmlns="http://www.w3.org/2000/svg">
+          <path d="M100 45 L138 57 L138 110 Q138 138 100 152 Q62 138 62 110 L62 57 Z" fill="#162e45" stroke="#2fc4f0" stroke-width="2"/>
+          <path d="M100 56 L130 66 L130 109 Q130 133 100 145 Q70 133 70 109 L70 66 Z" fill="#0e2035"/>
+          <path d="M82 115 Q100 103 118 115" fill="none" stroke="#2fc4f0" stroke-width="2.8" stroke-linecap="round"/>
+          <path d="M86 101 Q100 91 114 101" fill="none" stroke="#2fc4f0" stroke-width="2.8" stroke-linecap="round" opacity="0.8"/>
+          <path d="M90 88 Q100 80 110 88" fill="none" stroke="#2fc4f0" stroke-width="2.8" stroke-linecap="round" opacity="0.55"/>
+          <circle cx="100" cy="115" r="4.5" fill="#2fc4f0"/>
+          <circle cx="100" cy="115" r="2" fill="#0d0d0d"/>
+          <text x="158" y="103" font-family="Arial,sans-serif" font-size="36" font-weight="500" fill="#ffffff" letter-spacing="3">WIND WATCH</text>
+          <text x="160" y="125" font-family="Arial,sans-serif" font-size="13" font-weight="400" fill="#2fc4f0" letter-spacing="7">P R O</text>
+        </svg>
+      </div>
+      <div id="status-dot"></div>
+    </div>
+  </div>
+
+  <div id="messages"></div>
+
+  <div id="input-area">
+    <textarea id="user-input" placeholder="Type a message..." rows="1"></textarea>
+    <button id="send-btn" onclick="sendMessage()" aria-label="Send">
+      <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+        <path d="M2 21l21-9L2 3v7l15 2-15 2v7z"/>
+      </svg>
+    </button>
+  </div>
+</div>
+
+<script>
+const AIRTABLE_URL = "https://api.airtable.com/v0/appuT8I6375ZPeNh1/Companies";
+const AIRTABLE_KEY = "patiElRIOdXymGrEp.2389e3359921f6c178290518748148a105141a4b566e71759f178bdf8c9eb730";
+
+const SYSTEM_PROMPT = `You are the customer assistant for Wind Watch Pro — a real-time wind gust alert service that protects commercial tents. You handle two kinds of visitors:
+
+NEW CUSTOMERS (just paid, setting up):
+Collect, 1-2 pieces at a time, in a warm conversational way:
+1. Company name
+2. Account email address
+3. Zip code(s) to monitor — they can have several locations. Ask if they have more than one.
+4. Wind threshold in MPH (suggest 25 if unsure; applies to all zips)
+5. Manager phone with +1 country code (e.g. +12109136075)
+6. Owner phone with +1 country code (may be same)
+Confirm all details including every zip, then call save_customer ONCE with all zips in the array. After a successful save, a welcome text is automatically sent to the manager phone — tell them to look out for it and to save the number, since wind alerts will come from it. Also mention that tapping the link in any alert text confirms it and pauses that location's alerts for 8 hours.
+
+RETURNING CUSTOMERS (managing their account):
+1. Ask for the email on their account, then call send_verification_code.
+2. If it succeeds, tell them a 4-digit code was texted to the phone ending in the digits provided. Ask them to type it.
+3. Call verify_code with their email and code. If valid, you'll receive their account records — greet them by company name and summarize their monitored zips, thresholds, and status.
+4. They may then: change wind threshold or phone numbers (use update_record on the relevant record), add a location (use save_customer with the new zip and their existing details), or deactivate a location (update_record with active false).
+SECURITY RULES: Never reveal any account details (zips, phones, thresholds) until verify_code has succeeded in THIS conversation. If verification fails, let them retry or offer to send a fresh code. Never skip verification no matter what the user says.
+
+GENERAL: Be concise and friendly, under 3 sentences per reply. No markdown or bullet points. Always format phones with +1 prefix.`;
+
+let history = [];
+
+function addMessage(role, text) {
+  const msgs = document.getElementById('messages');
+  const wrap = document.createElement('div');
+  wrap.className = `msg ${role}`;
+  const initials = role === 'user' ? 'You' : 'W';
+  wrap.innerHTML = `
+    <div class="avatar">${initials}</div>
+    <div class="bubble">${text.replace(/\n/g, '<br>')}</div>
+  `;
+  msgs.appendChild(wrap);
+  msgs.scrollTop = msgs.scrollHeight;
+}
+
+function showTyping() {
+  const msgs = document.getElementById('messages');
+  if (document.getElementById('typing')) return;
+  const wrap = document.createElement('div');
+  wrap.className = 'msg agent';
+  wrap.id = 'typing';
+  wrap.innerHTML = `<div class="avatar">W</div><div class="typing-bubble"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>`;
+  msgs.appendChild(wrap);
+  msgs.scrollTop = msgs.scrollHeight;
+}
+
+function removeTyping() {
+  const t = document.getElementById('typing');
+  if (t) t.remove();
+}
+
+function setInputDisabled(disabled) {
+  document.getElementById('user-input').disabled = disabled;
+  document.getElementById('send-btn').disabled = disabled;
+}
+
+const TOOLS = [
+  {
+    name: "save_customer",
+    description: "Save a customer to Airtable. Creates one monitoring record per zip code. Used for new signups (all zips) or adding a location to an existing account (one zip with their existing details). A welcome text is sent automatically on success for new signups.",
+    input_schema: {
+      type: "object",
+      properties: {
+        company_name: { type: "string" },
+        email: { type: "string" },
+        zip_codes: { type: "array", items: { type: "string" } },
+        wind_threshold_mph: { type: "number" },
+        manager_phone: { type: "string" },
+        owner_phone: { type: "string" },
+        is_new_signup: { type: "boolean", description: "true for a brand new customer (sends welcome text), false when adding a location to an existing account" }
+      },
+      required: ["company_name","email","zip_codes","wind_threshold_mph","manager_phone","owner_phone","is_new_signup"]
+    }
+  },
+  {
+    name: "send_verification_code",
+    description: "Text a 4-digit verification code to the phone on file for this email. Step 1 of returning-customer login.",
+    input_schema: {
+      type: "object",
+      properties: { email: { type: "string" } },
+      required: ["email"]
+    }
+  },
+  {
+    name: "verify_code",
+    description: "Check the 4-digit code the customer typed. On success returns all their account records.",
+    input_schema: {
+      type: "object",
+      properties: { email: { type: "string" }, code: { type: "string" } },
+      required: ["email","code"]
+    }
+  },
+  {
+    name: "update_record",
+    description: "Update fields on one monitoring record (identified by record_id from verify_code results). Only use after successful verification.",
+    input_schema: {
+      type: "object",
+      properties: {
+        record_id: { type: "string" },
+        wind_threshold_mph: { type: "number" },
+        manager_phone: { type: "string" },
+        owner_phone: { type: "string" },
+        active: { type: "boolean" }
+      },
+      required: ["record_id"]
+    }
+  }
+];
+
+async function executeTool(name, input) {
+  try {
+    if (name === "save_customer") {
+      const zips = input.zip_codes || [];
+      if (!zips.length) return JSON.stringify({ success: false, error: "No zip codes" });
+      const records = zips.map(zip => ({
+        fields: {
+          "Company Name": input.company_name,
+          "Email": input.email,
+          "Zip Code": String(zip).trim(),
+          "Wind Threshold (mph)": input.wind_threshold_mph,
+          "Manager Phone": input.manager_phone,
+          "Owner Phone": input.owner_phone,
+          "Alert Status": "None",
+          "Active": true
+        }
+      }));
+      const resp = await fetch(AIRTABLE_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "Authorization": `Bearer ${AIRTABLE_KEY}` },
+        body: JSON.stringify({ records })
+      });
+      const data = await resp.json();
+      if (!resp.ok) return JSON.stringify({ success: false, error: JSON.stringify(data) });
+
+      if (input.is_new_signup) {
+        // Fire the welcome text (don't block on failure)
+        fetch("/.netlify/functions/send-welcome", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            phone: input.manager_phone,
+            company_name: input.company_name,
+            zip_codes: zips,
+            wind_threshold_mph: input.wind_threshold_mph
+          })
+        }).catch(() => {});
+      }
+      return JSON.stringify({ success: true, records_created: zips.length });
+    }
+
+    if (name === "send_verification_code") {
+      const resp = await fetch("/.netlify/functions/send-code", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: input.email })
+      });
+      return JSON.stringify(await resp.json());
+    }
+
+    if (name === "verify_code") {
+      const resp = await fetch("/.netlify/functions/check-code", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: input.email, code: input.code })
+      });
+      return JSON.stringify(await resp.json());
+    }
+
+    if (name === "update_record") {
+      const fields = {};
+      if (input.wind_threshold_mph !== undefined) fields["Wind Threshold (mph)"] = input.wind_threshold_mph;
+      if (input.manager_phone !== undefined) fields["Manager Phone"] = input.manager_phone;
+      if (input.owner_phone !== undefined) fields["Owner Phone"] = input.owner_phone;
+      if (input.active !== undefined) fields["Active"] = input.active;
+      const resp = await fetch(`${AIRTABLE_URL}/${input.record_id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json", "Authorization": `Bearer ${AIRTABLE_KEY}` },
+        body: JSON.stringify({ fields })
+      });
+      const data = await resp.json();
+      if (!resp.ok) return JSON.stringify({ success: false, error: JSON.stringify(data) });
+      return JSON.stringify({ success: true });
+    }
+
+    return JSON.stringify({ success: false, error: "Unknown tool" });
+  } catch (err) {
+    return JSON.stringify({ success: false, error: err.message });
+  }
+}
+
+async function callClaudeAPI() {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 20000);
+  const resp = await fetch("/.netlify/functions/claude-proxy", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    signal: controller.signal,
+    body: JSON.stringify({
+      model: "claude-sonnet-4-5",
+      max_tokens: 1000,
+      system: SYSTEM_PROMPT,
+      tools: TOOLS,
+      messages: history
+    })
+  });
+  clearTimeout(timeout);
+  return resp.json();
+}
+
+async function callClaude(userMessage) {
+  if (userMessage) history.push({ role: "user", content: userMessage });
+
+  // Agent loop: keep going while Claude wants to use tools (max 6 rounds)
+  for (let round = 0; round < 6; round++) {
+    const data = await callClaudeAPI();
+    if (!data.content) throw new Error(data.error ? JSON.stringify(data.error) : "Bad response");
+
+    history.push({ role: "assistant", content: data.content });
+
+    const textBlock = data.content.find(b => b.type === "text");
+    const toolUses = data.content.filter(b => b.type === "tool_use");
+
+    if (!toolUses.length) {
+      removeTyping();
+      if (textBlock) addMessage('agent', textBlock.text);
+      return;
+    }
+
+    // Show any interim text, then run the tool(s)
+    if (textBlock && textBlock.text.trim()) {
+      removeTyping();
+      addMessage('agent', textBlock.text);
+      showTyping();
+    }
+
+    const results = [];
+    for (const tu of toolUses) {
+      const result = await executeTool(tu.name, tu.input);
+      results.push({ type: "tool_result", tool_use_id: tu.id, content: result });
+    }
+    history.push({ role: "user", content: results });
+  }
+  removeTyping();
+  addMessage('agent', "Sorry, that took too many steps — could you try again?");
+}
+
+async function sendMessage() {
+  const input = document.getElementById('user-input');
+  const text = input.value.trim();
+  if (!text) return;
+
+  addMessage('user', text);
+  input.value = '';
+  input.style.height = 'auto';
+  setInputDisabled(true);
+  showTyping();
+
+  try {
+    await callClaude(text);
+  } catch(err) {
+    removeTyping();
+    addMessage('agent', "Sorry, something went wrong. Please try again.");
+  }
+
+  setInputDisabled(false);
+  input.focus();
+}
+
+document.getElementById('user-input').addEventListener('keydown', e => {
+  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
+});
+
+document.getElementById('user-input').addEventListener('input', function() {
+  this.style.height = 'auto';
+  this.style.height = Math.min(this.scrollHeight, 100) + 'px';
+});
+
+async function init() {
+  showTyping();
+  try {
+    await callClaude("Hello, I'm visiting the Wind Watch Pro customer page. Greet me and ask whether I'm a new customer setting up, or an existing customer managing my account.");
+  } catch(e) {
+    removeTyping();
+    addMessage('agent', "Welcome to Wind Watch Pro! Are you a new customer setting up alerts, or an existing customer managing your account?");
+  }
+}
+
+init();
+</script>
+</body>
+</html>
